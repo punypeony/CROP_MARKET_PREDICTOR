@@ -1,0 +1,14 @@
+[theme]
+base = "dark"
+primaryColor = "#3B82F6"
+backgroundColor = "#0B0B0C"
+secondaryBackgroundColor = "#151517"
+textColor = "#F5F5F5"
+borderColor = "#29292E"
+showWidgetBorder = true
+baseRadius = "medium"
+buttonRadius = "medium"
+dataframeBorderColor = "#29292E"
+
+[client]
+toolbarMode = "minimal"
