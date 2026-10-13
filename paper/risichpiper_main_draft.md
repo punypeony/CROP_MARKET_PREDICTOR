@@ -354,13 +354,13 @@ Before submission, the group should:
 
 [6] P. S. Intal, Jr., L. F. Cu, and J. A. Illescas, “Rice prices and the National Food Authority,” Philippine Institute for Development Studies, Discussion Paper 2012-27, 2012, doi: 10.62986/dp2012.27.
 
-[7] R. T. Yao, G. E. Shively, and W. A. Masters, “How successful are government interventions in food markets? Insights from the Philippine rice market,” *Philippine Journal of Development*, vol. 34, no. 1, pp. 35–59, 2007.
+[7] R. T. Yao, G. E. Shively, and W. A. Masters, “How successful are government interventions in food markets? Insights from the Philippine rice market,” *Philippine Journal of Development*, vol. 34, no. 1, pp. 35–59, 2007, doi: 10.62986/pjd2007.34.1b.
 
 [8] M. R. M. Abrigo, “Who weans with commodity price shocks? Rice prices and breastfeeding in the Philippines,” Philippine Institute for Development Studies, Discussion Paper 2016-28, 2016, doi: 10.62986/dp2016.28.
 
-[9] J. C. A. Armas, R. J. L. Asi, D. R. L. Mandap, and G. R. L. Moral, “Macroeconomic effects of temperature shocks in the Philippines: Evidence from impulse responses by local projections,” Bangko Sentral ng Pilipinas, BSP Discussion Paper 2024-02, Mar. 2024.
+[9] J. C. A. Armas, R. J. L. Asi, D. R. L. Mandap, and G. R. L. Moral, “Macroeconomic effects of temperature shocks in the Philippines: Evidence from impulse responses by local projections,” Bangko Sentral ng Pilipinas, BSP Discussion Paper 2024-02, Mar. 2024. [Online]. Available: https://www.bsp.gov.ph/Sites/researchsite/Publications/BSP-Discussion-Papers/DP202402.pdf
 
-[10] J. C. S. Allon-Pineda, J. C. G. Ocampo, and E. R. D. Santos, “Second-round effects and asymmetry in oil and food price shocks to inflation,” Bangko Sentral ng Pilipinas, BSP Discussion Paper 2025-06, Apr. 2025.
+[10] J. C. S. Allon-Pineda, J. C. G. Ocampo, and E. R. D. Santos, “Second-round effects and asymmetry in oil and food price shocks to inflation,” Bangko Sentral ng Pilipinas, BSP Discussion Paper 2025-06, Apr. 2025. [Online]. Available: https://www.bsp.gov.ph/Sites/researchsite/Publications/BSP-Discussion-Papers/DP202506.pdf
 
 [11] World Food Programme, “Market analysis guidelines,” Mar. 31, 2017. [Online]. Available: https://www.wfp.org/publications/market-analysis-guidelines
 
@@ -378,7 +378,7 @@ Before submission, the group should:
 
 [18] H. Ahumada and M. Cornejo, “Forecasting food prices: The case of corn, soybeans and wheat,” *International Journal of Forecasting*, vol. 32, no. 3, pp. 838–848, 2016, doi: 10.1016/j.ijforecast.2016.01.002.
 
-[19] T. Xiong, C. Li, and Y. Bao, “Seasonal forecasting of agricultural commodity price using a hybrid STL and ELM method: Evidence from the vegetable market in China,” *Neurocomputing*, vol. 275, pp. 2831–2844, 2018.
+[19] T. Xiong, C. Li, and Y. Bao, “Seasonal forecasting of agricultural commodity price using a hybrid STL and ELM method: Evidence from the vegetable market in China,” *Neurocomputing*, vol. 275, pp. 2831–2844, 2018, doi: 10.1016/j.neucom.2017.11.053.
 
 [20] T. Banerjee, S. Sinha, and P. Choudhury, “Long term and short term forecasting of horticultural produce based on the LSTM network model,” *Applied Intelligence*, vol. 52, pp. 9117–9147, 2022, doi: 10.1007/s10489-021-02845-x.
 
@@ -388,7 +388,7 @@ Before submission, the group should:
 
 [23] C. Bergmeir and J. M. Benítez, “On the use of cross-validation for time series predictor evaluation,” *Information Sciences*, vol. 191, pp. 192–213, 2012, doi: 10.1016/j.ins.2011.12.028.
 
-[24] F. Pedregosa *et al.*, “Scikit-learn: Machine learning in Python,” *Journal of Machine Learning Research*, vol. 12, pp. 2825–2830, 2011.
+[24] F. Pedregosa *et al.*, “Scikit-learn: Machine learning in Python,” *Journal of Machine Learning Research*, vol. 12, pp. 2825–2830, 2011. [Online]. Available: https://jmlr.org/papers/v12/pedregosa11a.html
 
 ## VII. Appendices
 
