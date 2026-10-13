@@ -120,6 +120,12 @@ def apply_custom_styles():
             letter-spacing: -0.025em;
         }
 
+        [data-testid="stBaseButton-primary"],
+        [data-testid="stBaseButton-primary"] p,
+        [data-testid="stBaseButton-primary"] span {
+            color: #FFFFFF !important;
+        }
+
         [data-testid="stBaseButton-primary"] {
             min-height: 2.65rem;
             background: var(--accent);
@@ -133,7 +139,7 @@ def apply_custom_styles():
         [data-testid="stBaseButton-primary"]:hover {
             background: var(--accent-hover);
             border-color: var(--accent-hover);
-            color: #FFFFFF;
+            color: #FFFFFF !important;
         }
 
         [data-testid="stBaseButton-secondary"],
