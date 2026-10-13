@@ -17,7 +17,7 @@ padayaojm@students.national-u.edu.ph
 
 Agricultural commodity prices vary across locations, commodities, market levels, units, and time, making manual comparison difficult for farmers, consumers, traders, and analysts. This study developed an end-to-end traditional machine-learning system that estimates Philippine agricultural commodity prices from publicly available World Food Programme market records. The processed dataset contains 242,212 observations from January 2000 to August 2026, covering 17 first-level administrative areas, 79 second-level areas, 108 markets, and 73 commodities. Price in Philippine pesos per recorded unit was the regression target. A chronological 80:20 split produced 193,769 training observations and 48,443 held-out observations. Categorical features were one-hot encoded inside a reusable preprocessing pipeline, while numeric location and calendar features were passed through. Exactly three permitted regression algorithms—Linear Regression, Random Forest Regressor, and Gradient Boosting Regressor—were compared using five-fold time-series cross-validation with mean absolute error (MAE) as the primary metric. Random Forest obtained the lowest validation MAE of PHP 23.216, compared with PHP 26.146 for Gradient Boosting and PHP 29.153 for Linear Regression. The saved Random Forest pipeline achieved MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.956 on the held-out partition. Commodity and category were the dominant aggregated feature groups. A Streamlit application loads the saved pipeline and provides monthly prediction and historical actual-versus-predicted views with validated inputs. The results demonstrate the practical value of nonlinear ensemble regression for heterogeneous market data, while also identifying limitations involving price-unit comparability, inflation, exogenous variables, uncertainty estimates, and evaluation documentation.
 
-**Index Terms—** agricultural prices, gradient boosting, machine learning, Philippines, random forest, regression, Streamlit
+**Index Terms—** agricultural prices, machine learning, Philippines, random forest, regression
 
 ## I. Introduction
 
@@ -82,7 +82,7 @@ The target variable is `price`, expressed in Philippine pesos per value of the a
 - Categorical: `admin1`, `admin2`, `market`, `category`, `commodity`, `unit`, `priceflag`, and `pricetype`.
 - Numerical: `latitude`, `longitude`, `year`, `month`, and `quarter`.
 
-The raw `date` field establishes chronological order and is decomposed into calendar features; it is not passed directly to the estimator. The dataset contains 17 `admin1` values, 79 `admin2` values, 108 markets, 73 commodities, three recorded unit labels (`KG`, `Unit`, and `750ML`), three price-flag combinations, and three price types (`Retail`, `Wholesale`, and `Farm Gate`). Because units are heterogeneous, `unit` is retained as a predictor and pooled price summaries are interpreted cautiously.
+The raw `date` field establishes chronological order and is decomposed into calendar features; it is not passed directly to the estimator. The dataset contains 17 `admin1` values, 79 `admin2` values, 108 markets, 73 commodities, three recorded unit labels (`KG`, `Unit`, and `750 ML`), three price-flag combinations, and three price types (`Retail`, `Wholesale`, and `Farm Gate`). Because units are heterogeneous, `unit` is retained as a predictor and pooled price summaries are interpreted cautiously.
 
 ### C. Exploratory Data Analysis
 
@@ -132,16 +132,16 @@ Exactly three permitted traditional regression algorithms are compared:
 2. **Random Forest Regressor** models nonlinear interactions through an ensemble of randomized trees [21].
 3. **Gradient Boosting Regressor** sequentially corrects residual errors with shallow trees [22].
 
-`GridSearchCV` uses negative MAE scoring with the five time-series folds. The Random Forest grid compares 50 and 100 trees, maximum depth of `None` or 20, and `max_features='sqrt'`. Its selected setting is 100 trees, unlimited depth, and square-root feature sampling. The Gradient Boosting grid uses 100 estimators, learning rates of 0.05 and 0.10, and tree depths of 3 and 5. Its selected setting is 100 estimators, learning rate 0.10, and maximum depth 5. Linear Regression is fitted without a hyperparameter grid.
+`GridSearchCV` uses negative MAE scoring with the five time-series folds. The Random Forest grid compares 50 and 100 trees, maximum depth of `None` or 20, and `max_features='sqrt'`. Its selected setting is 100 trees, unlimited depth, and square-root feature sampling. The Gradient Boosting grid uses 100 estimators, learning rates of 0.05 and 0.10, and tree depths of 3 and 5. Its selected setting is 100 estimators, learning rate 0.10, and maximum depth 5. Linear Regression has no tuned hyperparameters; it is scored on the same five folds through `GridSearchCV` with an empty grid.
 
 ### G. Saved Pipeline and Application
 
 The selected pipeline is serialized as `models/best_model.joblib`. The Streamlit application loads this artifact with resource caching and loads the processed data with data caching. It offers two user workflows:
 
-- **Monthly Forecast:** the user selects geographic, market, commodity, unit, price-flag, price-type, and calendar values; the application builds a one-row input with the required 13 features and returns the Random Forest estimate.
-- **Historical Comparison:** the application filters historical records, produces model estimates for matching observations, and plots actual and predicted series on the same Plotly chart. Metrics are computed only where both actual and predicted values exist.
+- **Monthly Forecast:** the user selects a commodity, a market, and a forecast year. The application takes the administrative areas, category, unit, price flag, and price type from that market's latest record and the coordinates from its historical medians, builds twelve 13-feature rows for January through December, and returns twelve monthly Random Forest estimates.
+- **Historical Comparison** (labeled "Historical Model Fit" in the interface): the user selects a commodity, a market, a start and end year, and monthly or yearly aggregation. The application predicts every month in the selected range, averages one compatible WFP series (a single unit, price type, and price flag) by month, and plots actual and predicted series on the same Plotly chart. Metrics are computed only where both actual and predicted values exist.
 
-The application exposes structured selectors derived from the available data, identifies the model, labels values in PHP per selected unit, handles empty result sets, and permits result download. It does not retrain or overwrite the pipeline during use.
+The application exposes structured selectors derived from the available data, identifies the model, labels values in PHP per selected unit, handles empty result sets, and permits result download. It does not retrain or overwrite the pipeline during use. In local testing, the first load of the 1.67-GB pipeline took about 44 seconds, and the first prediction after loading took about 1 second. With the model already in memory, later 12-month forecasts and an 84-month historical comparison each returned in under a tenth of a second.
 
 ## III. Results
 
@@ -173,11 +173,11 @@ Table I summarizes the processed dataset. No missing, duplicate, or nonpositive-
 
 **Fig. 2.** Mean recorded price by year. The temporal movement shows why random shuffling would produce an unrealistic evaluation and why calendar features may contain signal.
 
-Unit-level summaries reinforce the need to treat unit as a feature. `KG` records have a mean of PHP 135.83 and median of PHP 97.50, while `Unit` records average PHP 7.79 and `750ML` records average PHP 53.45. These values cannot be interpreted as directly interchangeable quantities.
+Unit-level summaries reinforce the need to treat unit as a feature. `KG` records have a mean of PHP 135.83 and median of PHP 97.50, while `Unit` records average PHP 7.79 and `750 ML` records average PHP 53.45. These values cannot be interpreted as directly interchangeable quantities.
 
 ![Price variation by category](figures/03_price_by_category.png)
 
-**Fig. 3.** Price variation across the eight most represented categories. Different centers and spreads support nonlinear category interactions.
+**Fig. 3.** Price variation across all six commodity categories, with outliers hidden. Different centers and spreads support nonlinear category interactions.
 
 ![Median price for common commodities](figures/04_top_commodities_median_price.png)
 
@@ -195,7 +195,7 @@ The EDA therefore led to five decisions: retain categorical market and product d
 
 ### B. Cross-Validation Comparison
 
-Table II presents the mean five-fold time-series cross-validation MAE reported by the modeling notebook. Random Forest achieved the smallest error, improving on Linear Regression by PHP 5.937 (20.4%) and on Gradient Boosting by PHP 2.930 (11.2%). This result selected Random Forest for final pipeline serialization.
+Table II presents the mean five-fold time-series cross-validation MAE reported by the validation notebook (`03_model_validation.ipynb`). Random Forest achieved the smallest error, improving on Linear Regression by PHP 5.937 (20.4%) and on Gradient Boosting by PHP 2.930 (11.2%). This result selected Random Forest for final pipeline serialization.
 
 **Table II. Five-fold time-series validation results**
 
@@ -209,17 +209,17 @@ The current notebook records the fold mean but not the standard deviation or ind
 
 ### C. Held-Out Performance and Model Selection
 
-The model-development notebook also contains a three-model held-out comparison (Table III). These values show the same ranking, but because the held-out partition was inspected for all three algorithms, they should not be represented as a test set viewed only once after final selection. This is an evaluation-documentation limitation that must be disclosed.
+The model-development notebook (`02_modeling.ipynb`) also contains a three-model held-out comparison (Table III). Those models use fixed, untuned settings rather than the tuned settings in Section II-F: Random Forest uses 50 trees with square-root feature sampling, and Gradient Boosting uses 100 estimators, learning rate 0.05, and maximum depth 5. These values show the same ranking, but because the held-out partition was inspected for all three algorithms, they should not be represented as a test set viewed only once after final selection. This is an evaluation-documentation limitation that must be disclosed.
 
 **Table III. Recorded held-out comparison from model development**
 
 | Algorithm | MAE (PHP) | RMSE (PHP) | R² |
 |---|---:|---:|---:|
-| Linear Regression | 30.958 | 47.818 | 0.872 |
-| Random Forest Regressor | **17.312** | **27.868** | **0.957** |
-| Gradient Boosting Regressor | 30.530 | 43.837 | 0.892 |
+| Linear Regression | 30.962 | 47.825 | 0.872 |
+| Random Forest Regressor | **17.350** | **28.239** | **0.955** |
+| Gradient Boosting Regressor | 30.653 | 43.925 | 0.892 |
 
-A read-only reproduction using the current processed dataset and saved Random Forest pipeline yielded the results in Table IV. No fitting or artifact saving occurred during this check.
+A read-only reproduction using the current processed dataset and saved Random Forest pipeline yielded the results in Table IV. No fitting or artifact saving occurred during this check. The validation notebook printed MAE = PHP 17.272, RMSE = PHP 27.947, and R² = 0.956 for its in-session model; the saved file reproduces PHP 17.271 and PHP 27.946. The source of this third-decimal difference was not determined.
 
 **Table IV. Reproduced saved-pipeline results on 48,443 later observations**
 
@@ -280,7 +280,7 @@ Code inspection and local execution confirm that the application loads the saved
 | Historical comparison | Actual and Random Forest series on one Plotly chart | Met locally |
 | Clean-environment dependencies | `requirements.txt` is present | Present; clean install still needs recorded verification |
 | Public deployed URL | No URL is supplied in the repository | Not yet met |
-| Application screenshots | No screenshots are present in `documentation/` | Not yet met |
+| Application screenshots | No `documentation/` folder or screenshots are present yet | Not yet met |
 
 ## IV. Discussion
 
@@ -311,12 +311,12 @@ The most important limitations are:
 1. **Test chronology and documentation.** The notebook reports held-out metrics for all three algorithms before the final saved-pipeline validation. This weakens the claim that the test partition was untouched until after selection. A final protocol should select and tune entirely inside training data, preserve a genuinely unseen date block, and record that sequence.
 2. **Same-date split boundary.** Multiple observations from 15 February 2025 appear on both sides of the row-level 80:20 cutoff. Splitting at a unique-date boundary would provide stronger temporal separation.
 3. **Missing fold variability.** Only mean cross-validation MAE is stored; fold scores and standard deviation must be reported for full compliance.
-4. **Heterogeneous measurement units.** Although unit is modeled, pooled metrics combine price errors from KG, Unit, and 750ML records. Unit-stratified metrics would be more interpretable.
+4. **Heterogeneous measurement units.** Although unit is modeled, pooled metrics combine price errors from KG, Unit, and 750 ML records. Unit-stratified metrics would be more interpretable.
 5. **No inflation adjustment.** Nominal pesos across 2000–2026 are compared. Year captures trend but does not replace a consumer-price deflator.
 6. **No lagged price or exogenous drivers.** The feature set excludes recent price lags, rainfall, extreme weather, production volume, fuel costs, trade flows, policy events, and inflation indices.
 7. **Coverage and reporting bias.** Public market observations may be uneven across dates, markets, and commodities; the model learns the reporting process as well as price behavior.
 8. **Point predictions only.** Random Forest outputs are presented without calibrated prediction intervals.
-9. **Artifact size and maintainability.** The serialized pipeline is approximately 1.67 GB, affecting startup time and hosting feasibility.
+9. **Artifact size and maintainability.** The serialized pipeline is approximately 1.67 GB and took about 44 seconds to load in local testing, affecting startup time and hosting feasibility.
 10. **Submission incompleteness.** A public deployment URL, complete technical documentation, source/license note, screenshots, contribution confirmations, signed authorship declaration, and final DOCX/PDF are not yet present.
 
 These limitations do not invalidate the reported local results, but they constrain generalization and must be resolved or acknowledged before the system is described as a fully compliant final submission.
@@ -404,7 +404,7 @@ Before submission, the group should:
 | `longitude` | Numeric | Predictor | Market longitude in decimal degrees |
 | `category` | Categorical | Predictor | Broad commodity group |
 | `commodity` | Categorical | Predictor | Specific commodity description |
-| `unit` | Categorical | Predictor | Recorded unit (`KG`, `Unit`, or `750ML`) |
+| `unit` | Categorical | Predictor | Recorded unit (`KG`, `Unit`, or `750 ML`) |
 | `priceflag` | Categorical | Predictor | Source flag such as actual or aggregate |
 | `pricetype` | Categorical | Predictor | Retail, Wholesale, or Farm Gate |
 | `price` | Numeric | Target | Recorded nominal Philippine pesos per unit |
@@ -422,7 +422,7 @@ admin2: selected supported province/area
 market: selected market
 category: selected commodity category
 commodity: selected commodity
-unit: KG, Unit, or 750ML
+unit: KG, Unit, or 750 ML
 priceflag: selected source flag
 pricetype: Retail, Wholesale, or Farm Gate
 latitude, longitude: associated market coordinates
@@ -431,7 +431,7 @@ month: 1-12
 quarter: derived from month
 ```
 
-**Output:** one Random Forest price estimate in PHP per selected unit, accompanied by model identification and context. In Historical Comparison mode, the output includes a table, downloadable CSV, summary metrics over matched records, and an Actual-versus-Random-Forest Plotly chart. Exact numeric output depends on the selected input and must be captured from the running application for the final screenshot appendix.
+**Output:** in Monthly Forecast mode, twelve Random Forest price estimates (January through December) in PHP per selected unit, accompanied by model identification and context. In Historical Comparison mode, the output includes a table, downloadable CSV, summary metrics over matched records, and an Actual-versus-Random-Forest Plotly chart. Exact numeric output depends on the selected input and must be captured from the running application for the final screenshot appendix.
 
 ### Appendix C. Reproducibility Map
 
