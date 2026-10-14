@@ -282,7 +282,7 @@ def render_page_header():
     st.markdown(
         """
         <div class="dashboard-header">
-            <h1>Crop Market Price Predictor</h1>
+            <h1>Commodity Market Price Predictor</h1>
             <p>Historical WFP market-price analysis and Random Forest forecasting.</p>
         </div>
         """,
@@ -331,11 +331,17 @@ def render_empty_state(title="No graph generated", message=None):
         )
 
 
-def render_forecast_result(result):
+def render_forecast_result(result, focus_month=None):
     """Render a forecast graph, dashboard, table, and CSV download."""
     forecast_df = result["data"]
     selection = result["selection"]
     details = result["details"]
+    focused = (
+        forecast_df.loc[forecast_df["month_name"] == focus_month].iloc[0]
+        if focus_month in forecast_df["month_name"].values
+        else forecast_df.iloc[0]
+    )
+    focus_month = focused["month_name"]
 
     st.subheader("Monthly Forecast")
     st.caption(
@@ -354,7 +360,10 @@ def render_forecast_result(result):
 
     with st.container(border=True):
         figure = create_forecast_chart(
-            forecast_df, selection["year"], details["unit"]
+            forecast_df,
+            selection["year"],
+            details["unit"],
+            focus_month=focus_month,
         )
         st.plotly_chart(
             figure,
@@ -364,13 +373,28 @@ def render_forecast_result(result):
             theme=None,
         )
 
+    yearly_average = forecast_df["predicted_price"].mean()
+    difference = focused["predicted_price"] - yearly_average
+    st.subheader(f"{focus_month} Forecast Detail")
+    render_metric_grid([
+        (
+            "Predicted Price",
+            format_price(focused["predicted_price"]),
+        ),
+        (
+            "Difference from Year Average",
+            f"{difference:+,.2f} PHP",
+        ),
+        ("Forecast Period", f"{focus_month} {selection['year']}"),
+    ])
+
     lowest = forecast_df.loc[forecast_df["predicted_price"].idxmin()]
     highest = forecast_df.loc[forecast_df["predicted_price"].idxmax()]
     st.subheader("Forecast Summary")
     render_metric_grid([
         (
             "Average Predicted Price",
-            format_price(forecast_df["predicted_price"].mean()),
+            format_price(yearly_average),
         ),
         (
             "Lowest Predicted Month",
@@ -380,8 +404,7 @@ def render_forecast_result(result):
             "Highest Predicted Month",
             f"{highest['month_name']} · {format_price(highest['predicted_price'])}",
         ),
-        ("Forecast Year", str(selection["year"])),
-    ], columns_per_row=4)
+    ])
     st.caption(
         f"Commodity: {selection['commodity']} | Market: {selection['market']} | "
         f"Unit: {details['unit']} | Price Type: {details['pricetype']} | "
@@ -429,11 +452,13 @@ def render_comparison_result(result):
     metrics = result["metrics"]
     context = result["evaluation"]
     aggregation = selection["aggregation"]
+    month_filter = selection.get("month_filter", "All Months")
 
     st.subheader(context["title"])
     st.caption(
         f"{selection['commodity']} · {selection['market']} · "
-        f"{selection['start_year']}–{selection['end_year']}"
+        f"{selection['start_year']}–{selection['end_year']} · "
+        f"{month_filter}"
     )
     st.caption(
         "Actual WFP observations and Random Forest predictions use matching "
@@ -453,6 +478,7 @@ def render_comparison_result(result):
             aggregation,
             details["unit"],
             context["title"],
+            month_filter=month_filter,
         )
         st.plotly_chart(
             figure,
@@ -482,6 +508,7 @@ def render_comparison_result(result):
     st.caption(
         f"Comparable periods: {metrics['period_count']:,} | Selected Period: "
         f"{selection['start_year']}–{selection['end_year']} | "
+        f"Month Filter: {month_filter} | "
         f"Data Source: WFP Historical Observations"
     )
     st.caption(
@@ -513,6 +540,8 @@ def render_comparison_result(result):
             ]
         ]
         aggregation_slug = "monthly_comparison"
+        if month_filter != "All Months":
+            aggregation_slug = f"{slugify(month_filter)}_comparison"
     else:
         display_df = comparison_df[
             [

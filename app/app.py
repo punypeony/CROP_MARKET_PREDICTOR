@@ -36,7 +36,7 @@ MONTH_NAMES = list(month_name[1:])
 
 
 st.set_page_config(
-    page_title="Crop Market Price Predictor",
+    page_title="Commodity Market Price Predictor",
     layout="wide",
 )
 apply_custom_styles()

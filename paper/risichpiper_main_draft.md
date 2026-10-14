@@ -1,4 +1,4 @@
-# Machine Learning-Based Philippine Agricultural Commodity Price Prediction Using Linear Regression, Random Forest, and Gradient Boosting
+# Machine Learning-Based Philippine Agricultural Commodity Price Prediction
 
 Martin B. Santiago  
 Jarod Kyle C. Alde  
@@ -15,9 +15,9 @@ padayaojm@students.national-u.edu.ph
 
 ## Abstract
 
-Agricultural commodity prices vary across locations, commodities, market levels, units, and time, making manual comparison difficult for farmers, consumers, traders, and analysts. This study developed an end-to-end traditional machine-learning system that estimates Philippine agricultural commodity prices from publicly available World Food Programme market records. The processed dataset contains 242,212 observations from January 2000 to August 2026, covering 17 first-level administrative areas, 79 second-level areas, 108 markets, and 73 commodities. Price in Philippine pesos per recorded unit was the regression target. A chronological 80:20 split produced 193,769 training observations and 48,443 held-out observations. Categorical features were one-hot encoded inside a reusable preprocessing pipeline, while numeric location and calendar features were passed through. Exactly three permitted regression algorithms—Linear Regression, Random Forest Regressor, and Gradient Boosting Regressor—were compared using five-fold time-series cross-validation with mean absolute error (MAE) as the primary metric. Random Forest obtained the lowest validation MAE of PHP 23.216, compared with PHP 26.146 for Gradient Boosting and PHP 29.153 for Linear Regression. The saved Random Forest pipeline achieved MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.956 on the held-out partition. Commodity and category were the dominant aggregated feature groups. A Streamlit application loads the saved pipeline and provides monthly prediction and historical actual-versus-predicted views with validated inputs. The results demonstrate the practical value of nonlinear ensemble regression for heterogeneous market data, while also identifying limitations involving price-unit comparability, inflation, exogenous variables, uncertainty estimates, and evaluation documentation.
+Food commodity prices vary across locations, commodities, market levels, units, and time, making manual comparison difficult for producers, consumers, traders, and analysts. This study developed an end-to-end traditional machine-learning system that estimates Philippine food commodity prices from publicly available World Food Programme market records. The processed dataset contains 242,212 observations from January 2000 to August 2026, covering 17 first-level administrative areas, 79 second-level areas, 108 markets, and 73 commodities across six food categories. Price in Philippine pesos per recorded unit was the regression target. A chronological 80:20 split produced 193,769 training observations and 48,443 held-out observations. Categorical features were one-hot encoded inside a reusable preprocessing pipeline, while numeric location and calendar features were passed through. Exactly three permitted regression algorithms—Linear Regression, Random Forest Regressor, and Gradient Boosting Regressor—were compared using five-fold time-series cross-validation with mean absolute error (MAE) as the primary metric. Random Forest obtained the lowest validation MAE of PHP 23.216, compared with PHP 26.146 for Gradient Boosting and PHP 29.153 for Linear Regression. The saved Random Forest pipeline achieved MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.956 on the held-out partition. Commodity and category were the dominant aggregated feature groups. A Streamlit application loads the saved pipeline and provides a 12-month prediction view with a selectable focus month and historical actual-versus-predicted views with optional calendar-month filtering. The results demonstrate the practical value of nonlinear ensemble regression for heterogeneous market data, while also identifying limitations involving price-unit comparability, inflation, exogenous variables, uncertainty estimates, and evaluation documentation.
 
-**Index Terms—** agricultural prices, machine learning, Philippines, random forest, regression
+**Index Terms—** food commodity prices, machine learning, Philippines, random forest, regression
 
 ## I. Introduction
 
@@ -25,13 +25,13 @@ Agricultural commodity prices vary across locations, commodities, market levels,
 
 Food-price accessibility, affordability, and stability are central to Philippine food security. Galang found that food access and affordability remain uneven and that price conditions must be considered alongside supply [1]. Briones likewise showed that food-price changes and economic shocks influence household food and nutrient intake, making timely price information relevant to welfare and policy [2]. Earlier Philippine policy analysis emphasized that food-market interventions must balance price stability, producer incentives, and food security rather than treating low prices as an isolated objective [3].
 
-The practical difficulty is that agricultural prices are not determined by commodity identity alone. They differ across regions, provinces, markets, sales levels, units, and seasons. The repository used in this study contains more than two hundred thousand Philippine market observations representing these interacting dimensions. A user who wants a plausible price for a selected commodity, market, price type, unit, and month would otherwise need to search a large historical table and reconcile inconsistent market coverage manually.
+The practical difficulty is that food commodity prices are not determined by commodity identity alone. They differ across regions, provinces, markets, sales levels, units, and seasons. The repository used in this study contains more than two hundred thousand Philippine market observations representing these interacting dimensions. Its scope is broader than crops: the six categories also include meat, fish, eggs, oils, pulses, nuts, and miscellaneous foods. A user who wants a plausible price for a selected commodity, market, price type, unit, and month would otherwise need to search a large historical table and reconcile inconsistent market coverage manually.
 
-This study frames the task as supervised regression. The target is the recorded market price in Philippine pesos for the selected unit. Intended users include students and researchers exploring historical price behavior, market analysts needing a rapid reference estimate, and agricultural stakeholders comparing recorded prices across places and months. Machine learning is appropriate because the dataset contains high-cardinality categorical variables and nonlinear interactions that are difficult to represent using a single hand-written formula.
+This study frames the task as supervised regression. The target is the recorded market price in Philippine pesos for the selected unit. Intended users include students and researchers exploring historical price behavior, market analysts needing a rapid reference estimate, and food-system stakeholders comparing recorded prices across places and months. Machine learning is appropriate because the dataset contains high-cardinality categorical variables and nonlinear interactions that are difficult to represent using a single hand-written formula.
 
 The study asks:
 
-1. How do Philippine agricultural prices vary across time, commodity, category, market, unit, and price type?
+1. How do Philippine food commodity prices vary across time, commodity, category, market, unit, and price type?
 2. Under a common chronological validation design, which of Linear Regression, Random Forest Regressor, and Gradient Boosting Regressor produces the lowest MAE?
 3. Can the selected preprocessing-and-model pipeline be integrated into a usable Streamlit application without retraining at prediction time?
 
@@ -41,7 +41,7 @@ The principal objective is to build, compare, and document exactly three traditi
 
 Philippine literature establishes why price analysis matters and which contextual factors a prediction system must not ignore. Briones examined the policy trade-off between rice self-sufficiency and food security, showing that market-price outcomes are inseparable from trade and self-sufficiency choices [4]. Tiongco and Francisco studied the relationship between food security and agricultural exports, illustrating how domestic outcomes sit within wider production and trade systems [5]. Intal, Cu, and Illescas analyzed rice prices and the National Food Authority and underscored the role of public institutions in price formation and stabilization [6]. These studies caution against interpreting a model’s output as a purely technological or policy-neutral quantity.
 
-Yao, Shively, and Masters assessed interventions in the Philippine rice market and found that the effectiveness of market policy must be evaluated empirically rather than assumed [7]. Abrigo linked rice-price shocks with household breastfeeding decisions, demonstrating that commodity-price changes can produce consequences beyond the market itself [8]. These findings support the need for accessible price information while also showing why prediction error has human significance.
+Shively, Yao, and Masters assessed interventions in the Philippine rice market and found that the effectiveness of market policy must be evaluated empirically rather than assumed [7]. Abrigo linked rice-price shocks with household breastfeeding decisions, demonstrating that commodity-price changes can produce consequences beyond the market itself [8]. These findings support the need for accessible price information while also showing why prediction error has human significance.
 
 Recent Philippine macroeconomic work broadens the set of potential drivers. Armas, Asi, Mandap, and Moral reported macroeconomic responses to temperature shocks, indicating that climate-related variation can pass through to the wider economy [9]. Allon-Pineda, Ocampo, and Santos examined second-round and asymmetric inflation effects from oil and food-price shocks [10]. Together, the ten Philippine sources [1]–[10] indicate that prices reflect food security, public policy, trade, climate, inflation, and household behavior. The present system does not claim to encode all of those mechanisms; instead, it supplies a reproducible baseline based on observed market, product, geography, sales level, unit, and calendar information.
 
@@ -71,7 +71,7 @@ The reviewed Philippine sources explain why agricultural prices matter but do no
 
 ### A. Research Design, Data Source, and Ethics
 
-The study used a quantitative, applied machine-learning design. The source file is the public WFP Philippine food-price dataset distributed through humanitarian open-data channels [11], [12]. The repository preserves both the original CSV and a processed CSV. The unit of analysis is one reported price observation for a date, geographic location, market, commodity, unit, price flag, and price type.
+The study used a quantitative, applied machine-learning design. The source file is the public WFP Philippine food-price dataset distributed through humanitarian open-data channels [11], [12]. The repository preserves both the original CSV and a processed CSV. The unit of analysis is one reported food commodity price observation for a date, geographic location, market, commodity, unit, price flag, and price type.
 
 The processed dataset contains 242,212 rows and 15 columns covering 15 January 2000 through 15 August 2026. It includes no personal identifiers, household records, or sensitive individual attributes. Accordingly, the study presents minimal direct privacy risk. Ethical use still requires attribution, preservation of the source record, and avoidance of claims that a model-generated estimate is an official price quotation. The final submission package should include an explicit source URL, retrieval date, and the applicable dataset license or permission statement; the current repository includes the data but not yet a complete source-and-license note.
 
@@ -82,7 +82,7 @@ The target variable is `price`, expressed in Philippine pesos per value of the a
 - Categorical: `admin1`, `admin2`, `market`, `category`, `commodity`, `unit`, `priceflag`, and `pricetype`.
 - Numerical: `latitude`, `longitude`, `year`, `month`, and `quarter`.
 
-The raw `date` field establishes chronological order and is decomposed into calendar features; it is not passed directly to the estimator. The dataset contains 17 `admin1` values, 79 `admin2` values, 108 markets, 73 commodities, three recorded unit labels (`KG`, `Unit`, and `750 ML`), three price-flag combinations, and three price types (`Retail`, `Wholesale`, and `Farm Gate`). Because units are heterogeneous, `unit` is retained as a predictor and pooled price summaries are interpreted cautiously.
+The raw `date` field establishes chronological order and is decomposed into calendar features; it is not passed directly to the estimator. The dataset contains 17 `admin1` values, 79 `admin2` values, 108 markets, 73 commodities, three recorded unit labels (`KG`, `Unit`, and `750 ML`), three price-flag combinations, and three price types (`Retail`, `Wholesale`, and `Farm Gate`). Its six categories are cereals and tubers; meat, fish, and eggs; miscellaneous food; oil and fats; pulses and nuts; and vegetables and fruits. Consequently, “food commodity” is more accurate than “crop” as the system-wide scope. Because units are heterogeneous, `unit` is retained as a predictor and pooled price summaries are interpreted cautiously.
 
 ### C. Exploratory Data Analysis
 
@@ -109,20 +109,12 @@ After chronological sorting, the first 80% of rows (193,769 observations) form t
 Model selection within the training partition uses five-fold `TimeSeriesSplit`, preserving temporal order. All three algorithms use the same feature set, preprocessing logic, folds, and primary scoring rule. MAE is the primary metric because it expresses typical absolute error directly in Philippine pesos and is less dominated by extreme prices than squared-error criteria. RMSE and R² are supporting metrics.
 
 The metrics are:
+ MAE = (1/n) × Σ |yᵢ − ŷᵢ|, for i = 1 to n
 
-\[
-MAE = \frac{1}{n}\sum_{i=1}^{n}|y_i-\hat{y}_i|,
-\]
+RMSE = √[ (1/n) × Σ (yᵢ − ŷᵢ)² ], for i = 1 to n
 
-\[
-RMSE = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i-\hat{y}_i)^2},
-\]
+R² = 1 − [ Σ (yᵢ − ŷᵢ)² ] / [ Σ (yᵢ − ȳ)² ]
 
-and
-
-\[
-R^2 = 1-\frac{\sum_i(y_i-\hat{y}_i)^2}{\sum_i(y_i-\bar{y})^2}.
-\]
 
 ### F. Algorithms and Hyperparameter Tuning
 
@@ -136,10 +128,10 @@ Exactly three permitted traditional regression algorithms are compared:
 
 ### G. Saved Pipeline and Application
 
-The selected pipeline is serialized as `models/best_model.joblib`. The Streamlit application loads this artifact with resource caching and loads the processed data with data caching. It offers two user workflows:
+The selected pipeline is serialized as `models/best_model.joblib`. The Streamlit application, titled **Commodity Market Price Predictor**, loads this artifact with resource caching and loads the processed data with data caching. It offers two user workflows:
 
-- **Monthly Forecast:** the user selects a commodity, a market, and a forecast year. The application takes the administrative areas, category, unit, price flag, and price type from that market's latest record and the coordinates from its historical medians, builds twelve 13-feature rows for January through December, and returns twelve monthly Random Forest estimates.
-- **Historical Comparison** (labeled "Historical Model Fit" in the interface): the user selects a commodity, a market, a start and end year, and monthly or yearly aggregation. The application predicts every month in the selected range, averages one compatible WFP series (a single unit, price type, and price flag) by month, and plots actual and predicted series on the same Plotly chart. Metrics are computed only where both actual and predicted values exist.
+- **Monthly Forecast:** the user selects a commodity, a market, a forecast year, and a focus month. The application takes the administrative areas, category, unit, price flag, and price type from that market's latest record and the coordinates from its historical medians, builds twelve 13-feature rows for January through December, and returns twelve monthly Random Forest estimates. The complete annual chart and table remain visible, while the chosen focus month is highlighted and summarized separately. Changing only the focus month reuses the generated 12-month result rather than reloading or rerunning the model.
+- **Historical Comparison** (labeled "Historical Model Fit" in the interface): the user selects a commodity, a market, a start and end year, monthly or yearly aggregation, and—when using monthly aggregation—either all months or one calendar month. The application predicts every month in the selected range, averages one compatible WFP series (a single unit, price type, and price flag) by month, and plots actual and predicted series on the same Plotly chart. Selecting one month retains that calendar month across the chosen years in the chart, metrics, table, and CSV. A specific-month comparison and yearly aggregation require at least two years so that the graph contains more than one period; a one-year range remains valid for all-month monthly aggregation. Metrics are computed only where both actual and predicted values exist.
 
 The application exposes structured selectors derived from the available data, identifies the model, labels values in PHP per selected unit, handles empty result sets, and permits result download. It does not retrain or overwrite the pipeline during use. In local testing, the first load of the 1.67-GB pipeline took about 44 seconds, and the first prediction after loading took about 1 second. With the model already in memory, later 12-month forecasts and an 84-month historical comparison each returned in under a tenth of a second.
 
@@ -274,11 +266,11 @@ Code inspection and local execution confirm that the application loads the saved
 | Requirement | Current evidence | Status |
 |---|---|---|
 | Load saved model and preprocessing | Cached `best_model.joblib` pipeline | Met locally |
-| Practical validated inputs | Cascading selectors and calendar controls | Met locally |
+| Practical validated inputs | Cascading selectors, focus-month control, optional historical month filter, and minimum-period validation | Met locally |
 | Clear output and units | PHP value and selected-unit labels | Met locally |
 | Invalid or empty input handling | User-facing warning/error paths | Met in code |
 | Historical comparison | Actual and Random Forest series on one Plotly chart | Met locally |
-| Clean-environment dependencies | `requirements.txt` is present | Present; clean install still needs recorded verification |
+| Clean-environment dependencies | Direct application and notebook dependencies are pinned in `requirements.txt` | Present; clean install still needs recorded verification |
 | Public deployed URL | No URL is supplied in the repository | Not yet met |
 | Application screenshots | No `documentation/` folder or screenshots are present yet | Not yet met |
 
@@ -300,7 +292,7 @@ The Philippine literature also explains why omitted variables matter. Policy int
 
 ### C. Practical Value and Trade-offs
 
-The Streamlit interface converts a large table and a complex preprocessing pipeline into a repeatable interaction. It reduces the risk that users supply columns in the wrong order or forget encoding. Historical overlays also let users compare estimates with recorded observations rather than seeing an isolated number. These features make the system useful for demonstration, exploratory analysis, and decision support.
+The Streamlit interface converts a large table and a complex preprocessing pipeline into a repeatable interaction. It reduces the risk that users supply columns in the wrong order or forget encoding. The focus-month control provides detail without discarding the annual context, while the historical month filter supports like-for-like comparison of the same calendar month across years. Historical overlays also let users compare estimates with recorded observations rather than seeing an isolated number. Minimum-period validation prevents specific-month and yearly selections from producing a one-point comparison. These features make the system useful for demonstration, exploratory analysis, and decision support.
 
 The application is not an official market bulletin. It provides point estimates without a prediction interval, and the term “forecast” should be interpreted narrowly: the estimator predicts price from a requested calendar and market configuration; it is not a recursively fitted univariate time-series model. A future user could select a calendar value outside the reliable training range, so the interface should display the supported date range and either block or prominently warn about extrapolation.
 
@@ -323,7 +315,7 @@ These limitations do not invalidate the reported local results, but they constra
 
 ## V. Conclusion and Recommendations
 
-This study developed and evaluated a traditional machine-learning system for Philippine agricultural commodity-price prediction. EDA showed a large, right-skewed, heterogeneous dataset in which commodity, category, unit, market level, geography, and time all matter. Under a shared five-fold time-series validation design, Random Forest obtained the lowest mean MAE (PHP 23.216), ahead of Gradient Boosting (PHP 26.146) and Linear Regression (PHP 29.153). The saved Random Forest pipeline reproduced MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.956 on 48,443 later observations. Its preprocessing and estimator are integrated into a Streamlit application with monthly prediction and historical comparison workflows.
+This study developed and evaluated a traditional machine-learning system for Philippine food commodity-price prediction. EDA showed a large, right-skewed, heterogeneous dataset in which commodity, category, unit, market level, geography, and time all matter. Under a shared five-fold time-series validation design, Random Forest obtained the lowest mean MAE (PHP 23.216), ahead of Gradient Boosting (PHP 26.146) and Linear Regression (PHP 29.153). The saved Random Forest pipeline reproduced MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.956 on 48,443 later observations. Its preprocessing and estimator are integrated into a Streamlit application with a full-year prediction view, selectable month detail, and all-month or month-filtered historical comparison workflows.
 
 The project therefore meets the core technical intent of an end-to-end traditional regression system: it uses a legitimate public dataset, conducts EDA, compares exactly three permitted algorithms, preserves chronological order, saves a complete pipeline, and provides a usable local application. It does not yet meet every final-deliverable requirement. In particular, evaluation chronology must be clarified, fold variability must be exported, and the public deployment and documentation package remain incomplete.
 
@@ -354,7 +346,7 @@ Before submission, the group should:
 
 [6] P. S. Intal, Jr., L. F. Cu, and J. A. Illescas, “Rice prices and the National Food Authority,” Philippine Institute for Development Studies, Discussion Paper 2012-27, 2012, doi: 10.62986/dp2012.27.
 
-[7] R. T. Yao, G. E. Shively, and W. A. Masters, “How successful are government interventions in food markets? Insights from the Philippine rice market,” *Philippine Journal of Development*, vol. 34, no. 1, pp. 35–59, 2007, doi: 10.62986/pjd2007.34.1b.
+[7] G. E. Shively, R. T. Yao, and W. A. Masters, “How successful are government interventions in food markets? Insights from the Philippine rice market,” *Philippine Journal of Development*, vol. 34, no. 1, pp. 35–59, 2008, doi: 10.62986/pjd2007.34.1b.
 
 [8] M. R. M. Abrigo, “Who weans with commodity price shocks? Rice prices and breastfeeding in the Philippines,” Philippine Institute for Development Studies, Discussion Paper 2016-28, 2016, doi: 10.62986/dp2016.28.
 
@@ -431,7 +423,7 @@ month: 1-12
 quarter: derived from month
 ```
 
-**Output:** in Monthly Forecast mode, twelve Random Forest price estimates (January through December) in PHP per selected unit, accompanied by model identification and context. In Historical Comparison mode, the output includes a table, downloadable CSV, summary metrics over matched records, and an Actual-versus-Random-Forest Plotly chart. Exact numeric output depends on the selected input and must be captured from the running application for the final screenshot appendix.
+**Output:** in Monthly Forecast mode, twelve Random Forest price estimates (January through December) in PHP per selected unit, accompanied by model identification and context. The selected focus month is highlighted on the annual chart and shown in a separate detail summary without removing the other months. In Historical Comparison mode, the output includes a table, downloadable CSV, summary metrics over matched records, and an Actual-versus-Random-Forest Plotly chart. Monthly comparisons may include all months or the same selected calendar month across multiple years. Specific-month and yearly comparisons require at least two years, while all-month monthly comparison permits a one-year range. Exact numeric output depends on the selected input and must be captured from the running application for the final screenshot appendix.
 
 ### Appendix C. Reproducibility Map
 
