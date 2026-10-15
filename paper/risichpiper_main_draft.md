@@ -35,7 +35,7 @@ The study asks:
 2. Under a common chronological validation design, which of Linear Regression, Random Forest Regressor, and Gradient Boosting Regressor produces the lowest MAE?
 3. Can the selected preprocessing-and-model pipeline be integrated into a usable Streamlit application without retraining at prediction time?
 
-The principal objective is to build, compare, and document exactly three traditional regression algorithms, select the best model using time-aware validation, evaluate the saved pipeline on later observations, and expose it through a simple application. The scope is limited to records and variables present in the WFP-derived Philippine price dataset. It does not attempt causal inference, production-yield forecasting, automated trading, or a guarantee of future market prices.
+The principal objective is to build, compare, and document exactly three traditional regression algorithms, select the best model using time-aware validation, evaluate the saved pipeline on later observations, and expose it through a simple application. The comparison succeeds when one algorithm has a lower mean cross-validation MAE than the other two, that error is stated in pesos, and the application returns estimates from the saved pipeline without retraining. The scope is limited to records and variables present in the WFP-derived Philippine price dataset. It does not attempt causal inference, production-yield forecasting, automated trading, or a guarantee of future market prices.
 
 ### B. Philippine Related Literature
 
@@ -71,9 +71,9 @@ The reviewed Philippine sources explain why agricultural prices matter but do no
 
 ### A. Research Design, Data Source, and Ethics
 
-The study used a quantitative, applied machine-learning design. The source file is the public WFP Philippine food-price dataset distributed through humanitarian open-data channels [11], [12]. The repository preserves both the original CSV and a processed CSV. The unit of analysis is one reported price observation for a date, geographic location, market, commodity, unit, price flag, and price type.
+The study used a quantitative, applied machine-learning design. The source file is the public WFP Philippine food-price dataset on the Humanitarian Data Exchange [25]. WFP compiles it as a registry of mostly monthly prices from the Philippine Statistics Authority and the Bureau of Agricultural Statistics, including series relayed through FAO GIEWS and the Food Price Monitoring and Analysis tool. The World Food Programme's market-analysis guidance and the HDX food-price schema describe the fields retained here [11], [12]. HDX distributes the file under the Creative Commons Attribution for Intergovernmental Organisations license (CC BY-IGO). The copy in this repository covers 15 January 2000 through 15 August 2026, and the HDX resource with that coverage was last modified on 11 October 2026. The repository preserves both the original CSV and a processed CSV, with a source note beside the original file. The unit of analysis is one reported price observation for a date, geographic location, market, commodity, unit, price flag, and price type.
 
-The processed dataset contains 242,212 rows and 15 columns covering 15 January 2000 through 15 August 2026. It includes no personal identifiers, household records, or sensitive individual attributes. Accordingly, the study presents minimal direct privacy risk. Ethical use still requires attribution, preservation of the source record, and avoidance of claims that a model-generated estimate is an official price quotation. The final submission package should include an explicit source URL, retrieval date, and the applicable dataset license or permission statement; the current repository includes the data but not yet a complete source-and-license note.
+The processed dataset contains 242,212 rows and 15 columns covering 15 January 2000 through 15 August 2026. It includes no personal identifiers, household records, or sensitive individual attributes. Accordingly, the study presents minimal direct privacy risk. Ethical use still requires attribution, preservation of the source record, and avoidance of claims that a model-generated estimate is an official price quotation.
 
 ### B. Variables and Target
 
@@ -132,16 +132,16 @@ Exactly three permitted traditional regression algorithms are compared:
 2. **Random Forest Regressor** models nonlinear interactions through an ensemble of randomized trees [21].
 3. **Gradient Boosting Regressor** sequentially corrects residual errors with shallow trees [22].
 
-`GridSearchCV` uses negative MAE scoring with the five time-series folds. The Random Forest grid compares 50 and 100 trees, maximum depth of `None` or 20, and `max_features='sqrt'`. Its selected setting is 100 trees, unlimited depth, and square-root feature sampling. The Gradient Boosting grid uses 100 estimators, learning rates of 0.05 and 0.10, and tree depths of 3 and 5. Its selected setting is 100 estimators, learning rate 0.10, and maximum depth 5. Linear Regression has no tuned hyperparameters; it is scored on the same five folds through `GridSearchCV` with an empty grid.
+`GridSearchCV` uses negative MAE scoring with the five time-series folds. The Random Forest grid compares 50 and 100 trees, maximum depth of `None` or 20, and `max_features='sqrt'`. Its selected setting is 100 trees, unlimited depth, and square-root feature sampling. The Gradient Boosting grid uses 100 estimators, learning rates of 0.05 and 0.10, and tree depths of 3 and 5. Its selected setting is 100 estimators, learning rate 0.10, and maximum depth 5. Linear Regression has no tuned hyperparameters; it is scored on the same five folds through `GridSearchCV` with an empty grid. Random Forest and Gradient Boosting use `random_state=42`. Linear Regression has no random component.
 
 ### G. Saved Pipeline and Application
 
 The selected pipeline is serialized as `models/best_model.joblib`. The Streamlit application loads this artifact with resource caching and loads the processed data with data caching. It offers two user workflows:
 
-- **Monthly Forecast:** the user selects a commodity, a market, and a forecast year. The application takes the administrative areas, category, unit, price flag, and price type from that market's latest record and the coordinates from its historical medians, builds twelve 13-feature rows for January through December, and returns twelve monthly Random Forest estimates.
+- **Monthly Forecast:** the user selects a commodity, a market, and a forecast year. The application takes the administrative areas, category, unit, price flag, and price type from that market's latest record and the coordinates from its historical medians, builds twelve 13-feature rows for January through December, and returns twelve monthly Random Forest estimates. Each month also shows the standard deviation across the 100 trees.
 - **Historical Comparison** (labeled "Historical Model Fit" in the interface): the user selects a commodity, a market, a start and end year, and monthly or yearly aggregation. The application predicts every month in the selected range, averages one compatible WFP series (a single unit, price type, and price flag) by month, and plots actual and predicted series on the same Plotly chart. Metrics are computed only where both actual and predicted values exist.
 
-The application exposes structured selectors derived from the available data, identifies the model, labels values in PHP per selected unit, handles empty result sets, and permits result download. It does not retrain or overwrite the pipeline during use. In local testing, the first load of the 1.67-GB pipeline took about 44 seconds, and the first prediction after loading took about 1 second. With the model already in memory, later 12-month forecasts and an 84-month historical comparison each returned in under a tenth of a second.
+An "About this model" section names the algorithm, the fields the user selects, the fields taken from the latest matching record, the peso-per-unit meaning of the output, and the meaning of the tree spread. The application uses structured selectors derived from the available data, labels values in PHP per selected unit, handles empty result sets, and permits result download. It does not retrain or overwrite the pipeline during use. In local testing, the compressed 304.6-MB pipeline loaded in about 18 seconds, and the first prediction after loading took about 1 second. With the model already in memory, later 12-month forecasts and an 84-month historical comparison each returned in under a tenth of a second.
 
 ## III. Results
 
@@ -205,7 +205,7 @@ Table II presents the mean five-fold time-series cross-validation MAE reported b
 | Gradient Boosting Regressor | 26.146 | 2 |
 | Linear Regression | 29.153 | 3 |
 
-The current notebook records the fold mean but not the standard deviation or individual fold scores. Consequently, validation variability cannot yet be reported and should be exported before final submission.
+The validation notebook scores the selected setting of each algorithm on these same five training folds and reports the mean, standard deviation, and per-fold MAE, RMSE, and R². That comparison does not use the held-out partition. Table II reports the mean MAE from the completed search.
 
 ### C. Held-Out Performance and Model Selection
 
@@ -239,7 +239,7 @@ A read-only reproduction using the current processed dataset and saved Random Fo
 
 **Fig. 7.** Residual-versus-prediction and residual-distribution diagnostics for the saved Random Forest pipeline. Most errors cluster around zero, but the positive mean and median show mild underprediction on average. The wider residual range at higher predicted prices and extreme residuals (minimum −PHP 521.91; maximum PHP 292.53) show that expensive or unusual observations remain difficult.
 
-Random Forest was selected because it produced the lowest validation MAE, captured interactions unavailable to the additive linear baseline, exceeded the tested Gradient Boosting configuration, remained a permitted traditional method, and could be serialized with preprocessing for practical deployment. Its main trade-offs are a large artifact (approximately 1.67 GB), slower loading than Linear Regression, and less direct coefficient-level interpretability.
+Random Forest was selected because it produced the lowest validation MAE, captured interactions unavailable to the additive linear baseline, exceeded the tested Gradient Boosting configuration, remained a permitted traditional method, and could be serialized with preprocessing for practical deployment. Its main trade-offs are a large artifact (304.6 MB on disk and about 1.8 GB in memory), slower loading than Linear Regression, and less direct coefficient-level interpretability.
 
 ### D. Feature Importance
 
@@ -267,20 +267,26 @@ Commodity and category jointly account for 78.52% of impurity-based importance, 
 
 ### E. Application Evidence
 
-Code inspection and local execution confirm that the application loads the saved pipeline, reads the processed data, constructs the expected 13-feature input, predicts without retraining, and displays historical actual-versus-predicted values on one chart. Table VI maps application requirements to current evidence.
+Local execution confirms that the application loads the saved pipeline, reads the processed data, constructs the expected 13-feature input, predicts without retraining, and displays historical actual-versus-predicted values on one chart. A clean Python 3.13 environment that installed only `requirements.txt` completed a 12-month forecast and a historical comparison with no missing-module error. Fig. 8 and Fig. 9 show the two workflows for one series.
 
-**Table VI. Application requirement status**
+**Table VI. Application behavior**
 
-| Requirement | Current evidence | Status |
-|---|---|---|
-| Load saved model and preprocessing | Cached `best_model.joblib` pipeline | Met locally |
-| Practical validated inputs | Cascading selectors and calendar controls | Met locally |
-| Clear output and units | PHP value and selected-unit labels | Met locally |
-| Invalid or empty input handling | User-facing warning/error paths | Met in code |
-| Historical comparison | Actual and Random Forest series on one Plotly chart | Met locally |
-| Clean-environment dependencies | `requirements.txt` is present | Present; clean install still needs recorded verification |
-| Public deployed URL | No URL is supplied in the repository | Not yet met |
-| Application screenshots | No `documentation/` folder or screenshots are present yet | Not yet met |
+| Function | What the application does |
+|---|---|
+| Saved pipeline | Loads and caches `best_model.joblib`; it does not retrain |
+| Inputs | Cascading commodity and market selectors, plus calendar controls |
+| Output | Price in PHP per selected unit, with the tree-spread range on a monthly forecast |
+| Invalid or empty input | Warns when no comparable series exists or the start year is after the end year |
+| Historical comparison | Plots one actual WFP series and the Random Forest series on the same chart |
+| Dependencies | `requirements.txt`, verified by a clean Python 3.13 install |
+
+![Monthly forecast screen](figures/08_monthly_forecast.png)
+
+**Fig. 8.** Monthly Forecast for Rice (regular, milled), Metro Manila, retail, per kilogram, 2026. The line is the Random Forest estimate. The same screen lists each month's price and the standard deviation across the 100 trees; those values are in Appendix B.
+
+![Historical comparison screen](figures/09_historical_comparison.png)
+
+**Fig. 9.** Historical comparison for the same commodity and market, monthly, from 2022 to 2026. Actual WFP prices and Random Forest predictions share one chart. The range crosses the February 2025 training boundary, so the application labels the result a mixed period.
 
 ## IV. Discussion
 
@@ -302,7 +308,7 @@ The Philippine literature also explains why omitted variables matter. Policy int
 
 The Streamlit interface converts a large table and a complex preprocessing pipeline into a repeatable interaction. It reduces the risk that users supply columns in the wrong order or forget encoding. Historical overlays also let users compare estimates with recorded observations rather than seeing an isolated number. These features make the system useful for demonstration, exploratory analysis, and decision support.
 
-The application is not an official market bulletin. It provides point estimates without a prediction interval, and the term “forecast” should be interpreted narrowly: the estimator predicts price from a requested calendar and market configuration; it is not a recursively fitted univariate time-series model. A future user could select a calendar value outside the reliable training range, so the interface should display the supported date range and either block or prominently warn about extrapolation.
+The application is not an official market bulletin. It provides a point estimate plus the spread across the forest's trees, which is not a calibrated prediction interval. The term “forecast” should be interpreted narrowly: the estimator predicts price from a requested calendar and market configuration; it is not a recursively fitted univariate time-series model. When the selected year is later than the latest WFP record, the interface warns that the result is extrapolation.
 
 ### D. Limitations and Validity Threats
 
@@ -310,35 +316,27 @@ The most important limitations are:
 
 1. **Test chronology and documentation.** The notebook reports held-out metrics for all three algorithms before the final saved-pipeline validation. This weakens the claim that the test partition was untouched until after selection. A final protocol should select and tune entirely inside training data, preserve a genuinely unseen date block, and record that sequence.
 2. **Same-date split boundary.** Multiple observations from 15 February 2025 appear on both sides of the row-level 80:20 cutoff. Splitting at a unique-date boundary would provide stronger temporal separation.
-3. **Missing fold variability.** Only mean cross-validation MAE is stored; fold scores and standard deviation must be reported for full compliance.
+3. **Validation summary.** Table II reports the mean cross-validation MAE. The standard deviation and the per-fold MAE, RMSE, and R² for the same training folds are produced by the validation notebook rather than repeated in that table.
 4. **Heterogeneous measurement units.** Although unit is modeled, pooled metrics combine price errors from KG, Unit, and 750 ML records. Unit-stratified metrics would be more interpretable.
 5. **No inflation adjustment.** Nominal pesos across 2000–2026 are compared. Year captures trend but does not replace a consumer-price deflator.
 6. **No lagged price or exogenous drivers.** The feature set excludes recent price lags, rainfall, extreme weather, production volume, fuel costs, trade flows, policy events, and inflation indices.
 7. **Coverage and reporting bias.** Public market observations may be uneven across dates, markets, and commodities; the model learns the reporting process as well as price behavior.
-8. **Point predictions only.** Random Forest outputs are presented without calibrated prediction intervals.
-9. **Artifact size and maintainability.** The serialized pipeline is approximately 1.67 GB and took about 44 seconds to load in local testing, affecting startup time and hosting feasibility.
-10. **Submission incompleteness.** A public deployment URL, complete technical documentation, source/license note, screenshots, contribution confirmations, signed authorship declaration, and final DOCX/PDF are not yet present.
+8. **Point predictions.** The monthly forecast also shows the standard deviation across the 100 trees. That spread is not a calibrated prediction interval.
+9. **Artifact size.** The serialized pipeline is 304.6 MB on disk, uses about 1.8 GB of memory once loaded, and took about 18 seconds to load in local testing.
 
-These limitations do not invalidate the reported local results, but they constrain generalization and must be resolved or acknowledged before the system is described as a fully compliant final submission.
+These limitations constrain generalization. They do not change the local results reported above.
 
 ## V. Conclusion and Recommendations
 
 This study developed and evaluated a traditional machine-learning system for Philippine agricultural commodity-price prediction. EDA showed a large, right-skewed, heterogeneous dataset in which commodity, category, unit, market level, geography, and time all matter. Under a shared five-fold time-series validation design, Random Forest obtained the lowest mean MAE (PHP 23.216), ahead of Gradient Boosting (PHP 26.146) and Linear Regression (PHP 29.153). The saved Random Forest pipeline reproduced MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.956 on 48,443 later observations. Its preprocessing and estimator are integrated into a Streamlit application with monthly prediction and historical comparison workflows.
 
-The project therefore meets the core technical intent of an end-to-end traditional regression system: it uses a legitimate public dataset, conducts EDA, compares exactly three permitted algorithms, preserves chronological order, saves a complete pipeline, and provides a usable local application. It does not yet meet every final-deliverable requirement. In particular, evaluation chronology must be clarified, fold variability must be exported, and the public deployment and documentation package remain incomplete.
+Further work should:
 
-Before submission, the group should:
-
-1. rerun or restructure evaluation so final model selection occurs before access to a genuinely unseen date-block test set;
-2. split on a unique-date boundary and save all fold MAE values, mean, and standard deviation;
+1. keep model selection inside the training data and reserve a date-block test set that is scored only after selection;
+2. split on a unique-date boundary so one calendar day is not divided between the two partitions;
 3. report metrics by unit, commodity support, price type, and price range;
-4. add lagged prices and evaluate weather, inflation, fuel, production, and policy-event variables where ethically and legally available;
-5. add calibrated prediction intervals and extrapolation warnings;
-6. compress or distill the model if hosting limits make the 1.67-GB artifact impractical;
-7. finish the README, data-source/license note, user guide, troubleshooting notes, screenshots, and clean-environment test;
-8. deploy the Streamlit application and record its URL;
-9. have all members confirm the contribution record and sign the ownership/authorship declaration; and
-10. convert the final IEEE-formatted manuscript to DOCX and PDF and check every in-text citation against the reference list.
+4. add lagged prices and evaluate weather, inflation, fuel, production, and policy-event variables where ethically and legally available; and
+5. add calibrated prediction intervals, beyond the tree-spread range the application already shows.
 
 ## VI. References
 
@@ -390,6 +388,8 @@ Before submission, the group should:
 
 [24] F. Pedregosa *et al.*, “Scikit-learn: Machine learning in Python,” *Journal of Machine Learning Research*, vol. 12, pp. 2825–2830, 2011. [Online]. Available: https://jmlr.org/papers/v12/pedregosa11a.html
 
+[25] World Food Programme, “Philippines - Food Prices,” Humanitarian Data Exchange. [Online]. Available: https://data.humdata.org/dataset/wfp-food-prices-for-philippines
+
 ## VII. Appendices
 
 ### Appendix A. Data Dictionary
@@ -414,24 +414,35 @@ Before submission, the group should:
 
 ### Appendix B. Example Application Input and Output
 
-**Illustrative valid input schema**
+The user selects Rice (regular, milled), Metro Manila, and 2026. The application fills the remaining fields from that market's latest retail record and its historical median coordinates.
 
-```text
-admin1: selected supported region
-admin2: selected supported province/area
-market: selected market
-category: selected commodity category
-commodity: selected commodity
-unit: KG, Unit, or 750 ML
-priceflag: selected source flag
-pricetype: Retail, Wholesale, or Farm Gate
-latitude, longitude: associated market coordinates
-year: requested year
-month: 1-12
-quarter: derived from month
-```
+| Field | Value used |
+|---|---|
+| Commodity | Rice (regular, milled) |
+| Market | Metro Manila |
+| Admin1 / Admin2 | National Capital region / Metropolitan Manila |
+| Category | cereals and tubers |
+| Unit | KG |
+| Price flag / price type | actual / Retail |
+| Latitude / longitude | 14.60 / 120.98 |
+| Year | 2026 |
 
-**Output:** in Monthly Forecast mode, twelve Random Forest price estimates (January through December) in PHP per selected unit, accompanied by model identification and context. In Historical Comparison mode, the output includes a table, downloadable CSV, summary metrics over matched records, and an Actual-versus-Random-Forest Plotly chart. Exact numeric output depends on the selected input and must be captured from the running application for the final screenshot appendix.
+The saved pipeline then returns one estimate per month. Tree spread is the standard deviation across the 100 trees, in pesos.
+
+| Month | Predicted price (PHP/KG) | Tree spread (PHP) |
+|---|---:|---:|
+| January | 45.45 | 12.18 |
+| February | 45.04 | 9.97 |
+| March | 45.71 | 12.76 |
+| April | 45.83 | 9.95 |
+| May | 46.05 | 10.01 |
+| June | 46.24 | 10.00 |
+| July | 46.20 | 9.99 |
+| August | 46.64 | 10.30 |
+| September | 46.78 | 10.41 |
+| October | 46.06 | 10.38 |
+| November | 46.04 | 10.36 |
+| December | 45.40 | 9.31 |
 
 ### Appendix C. Reproducibility Map
 
@@ -481,25 +492,3 @@ We affirm that the submitted work accurately represents our documented contribut
 | Jarod Kyle C. Alde, Student Group Member |  |  |
 | Adrian A. Dador, Student Group Member |  |  |
 | John McRae M. Padayao, Student Group Member |  |  |
-
-### Appendix F. Final Compliance Check
-
-| Requirement | Status at time of paper revision |
-|---|---|
-| Clear regression target and intended users | Complete |
-| Legitimate public dataset included | Complete |
-| Dataset source/license note | Source identified; standalone license note still required |
-| At least five meaningful EDA figures | Complete; six EDA figures included |
-| Exactly three permitted algorithms | Complete |
-| Common preprocessing and five-fold time-series validation | Complete |
-| Fold mean and variability | Mean complete; variability not yet exported |
-| Chronological 80:20 split | Complete at row level; unique-date boundary recommended |
-| Truly untouched final test | Not fully demonstrated; protocol revision recommended |
-| MAE, RMSE, R², and residual analysis | Complete for the saved Random Forest pipeline |
-| Saved pipeline used by Streamlit | Complete locally |
-| Valid, invalid, and boundary UI test record | Code handling present; formal test log still required |
-| Public deployment URL | Missing |
-| Complete README and technical documentation | Incomplete |
-| Contribution record confirmed | Pending member confirmation |
-| Signed ownership/authorship declaration | Pending signatures |
-| IEEE-formatted DOCX and PDF | Pending export |
