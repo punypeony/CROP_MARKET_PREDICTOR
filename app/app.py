@@ -1,4 +1,5 @@
 import sys
+from calendar import month_name
 from pathlib import Path
 
 import streamlit as st
@@ -31,8 +32,11 @@ from src.ui import (
 )
 
 
+MONTH_NAMES = list(month_name[1:])
+
+
 st.set_page_config(
-    page_title="Crop Market Price Predictor",
+    page_title="Commodity Market Price Predictor",
     layout="wide",
 )
 apply_custom_styles()
@@ -40,7 +44,7 @@ apply_custom_styles()
 
 def forecast_controls(df, commodities):
     """Render forecast selections and return their current state."""
-    control_1, control_2, control_3 = st.columns(3)
+    control_1, control_2, control_3, control_4 = st.columns(4)
     with control_1:
         commodity = st.selectbox(
             "Commodity", commodities, key="forecast_commodity"
@@ -60,6 +64,16 @@ def forecast_controls(df, commodities):
             value=latest_year + 1,
             step=1,
         ))
+    with control_4:
+        focus_month = st.selectbox(
+            "Focus Month",
+            MONTH_NAMES,
+            key="forecast_focus_month",
+            help=(
+                "Highlights one month in the full-year forecast and shows "
+                "its prediction in detail."
+            ),
+        )
     _, action = st.columns([2, 1])
     with action:
         generate = st.button(
@@ -72,7 +86,7 @@ def forecast_controls(df, commodities):
         "commodity": commodity,
         "market": market,
         "year": year,
-    }, generate, latest_year
+    }, focus_month, generate, latest_year
 
 
 def comparison_controls(df, commodities):
@@ -99,7 +113,7 @@ def comparison_controls(df, commodities):
         st.warning("No comparable historical observations are available.")
         return None, False
 
-    year_1, year_2, aggregation_column = st.columns(3)
+    year_1, year_2, aggregation_column, month_column = st.columns(4)
     with year_1:
         start_year = st.selectbox(
             "Start Year",
@@ -120,10 +134,38 @@ def comparison_controls(df, commodities):
             ["Monthly Average", "Yearly Average"],
             key="comparison_aggregation",
         )
+    with month_column:
+        selected_month = st.selectbox(
+            "Month Filter",
+            ["All Months", *MONTH_NAMES],
+            key="comparison_month_filter",
+            disabled=aggregation == "Yearly Average",
+            help=(
+                "For monthly comparisons, select one calendar month to "
+                "compare it across the chosen years."
+            ),
+        )
+    month_filter = (
+        selected_month
+        if aggregation == "Monthly Average"
+        else "All Months"
+    )
 
     invalid_range = start_year > end_year
+    insufficient_periods = (
+        start_year == end_year
+        and (
+            aggregation == "Yearly Average"
+            or month_filter != "All Months"
+        )
+    )
     if invalid_range:
         st.warning("Start Year must be earlier than or equal to End Year.")
+    elif insufficient_periods:
+        st.warning(
+            "Select at least two years when using a specific month or "
+            "yearly aggregation."
+        )
     st.caption(
         f"Comparable series: {details['unit']} | {details['pricetype']} | "
         f"WFP price flag: {details['priceflag']}"
@@ -134,7 +176,7 @@ def comparison_controls(df, commodities):
             "Generate Comparison",
             type="primary",
             width="stretch",
-            disabled=invalid_range,
+            disabled=invalid_range or insufficient_periods,
             key="generate_comparison",
         )
     return {
@@ -143,6 +185,7 @@ def comparison_controls(df, commodities):
         "start_year": start_year,
         "end_year": end_year,
         "aggregation": aggregation,
+        "month_filter": month_filter,
     }, generate
 
 
@@ -179,6 +222,11 @@ def generate_comparison(df, selection):
         start_year=selection["start_year"],
         end_year=selection["end_year"],
         aggregation=selection["aggregation"],
+        month=(
+            MONTH_NAMES.index(selection["month_filter"]) + 1
+            if selection["month_filter"] != "All Months"
+            else None
+        ),
     )
     if data.empty:
         st.session_state.pop("comparison_result", None)
@@ -229,7 +277,7 @@ with st.container(border=True):
         ),
     )
     if graph_mode == "Monthly Forecast":
-        selection, generate, latest_year = forecast_controls(
+        selection, focus_month, generate, latest_year = forecast_controls(
             dataset, commodities
         )
     else:
@@ -244,7 +292,7 @@ if graph_mode == "Monthly Forecast":
 
     result = st.session_state.get("forecast_result")
     if result and result["selection"] == selection:
-        render_forecast_result(result)
+        render_forecast_result(result, focus_month)
     elif result:
         render_empty_state(
             "Selections changed",

@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 
 
 ACCENT_BLUE = "#3B82F6"
+FOCUS_AMBER = "#F59E0B"
 PREDICTION_GRAY = "#CBD5E1"
 GRID_COLOR = "#27272A"
 AXIS_COLOR = "#3F3F46"
@@ -109,7 +110,12 @@ def _apply_price_layout(fig, title, xaxis_title, unit, showlegend=False):
     return fig
 
 
-def create_forecast_chart(forecast_df, year, unit=None):
+def create_forecast_chart(
+    forecast_df,
+    year,
+    unit=None,
+    focus_month=None,
+):
     """Create a January-to-December Random Forest forecast chart."""
     chart_df = forecast_df.copy()
     chart_df["month_name"] = pd.Categorical(
@@ -130,6 +136,23 @@ def create_forecast_chart(forecast_df, year, unit=None):
             "<extra>Random Forest prediction</extra>"
         ),
     ))
+    focused = chart_df.loc[chart_df["month_name"] == focus_month]
+    if not focused.empty:
+        fig.add_trace(go.Scatter(
+            x=focused["month_name"],
+            y=focused["predicted_price"],
+            mode="markers",
+            name=f"{focus_month} focus",
+            marker={
+                "color": FOCUS_AMBER,
+                "size": 13,
+                "line": {"color": TEXT_COLOR, "width": 2},
+            },
+            hovertemplate=(
+                "%{x}<br>Focused Prediction: ₱%{y:,.2f}"
+                "<extra></extra>"
+            ),
+        ))
     fig.update_xaxes(categoryorder="array", categoryarray=MONTHS)
     return _apply_price_layout(
         fig,
@@ -228,6 +251,7 @@ def create_comparison_chart(
     aggregation,
     unit,
     context_title,
+    month_filter="All Months",
 ):
     """Plot actual WFP prices and comparable RF predictions together."""
     chart_df = comparison_df.copy()
@@ -282,13 +306,25 @@ def create_comparison_chart(
     if aggregation == "Yearly Average":
         fig.update_xaxes(dtick=1, tickformat="d")
         xaxis_title = "Year"
+    elif month_filter != "All Months":
+        fig.update_xaxes(
+            tickmode="array",
+            tickvals=chart_df["period"],
+            ticktext=chart_df["period"].dt.strftime("%Y"),
+        )
+        xaxis_title = "Year"
     else:
         _apply_monthly_comparison_ticks(fig, chart_df["period"])
         xaxis_title = "Month"
 
+    chart_scope = (
+        month_filter
+        if month_filter != "All Months"
+        else aggregation
+    )
     return _apply_price_layout(
         fig,
-        f"{context_title} — {aggregation}",
+        f"{context_title} — {chart_scope}",
         xaxis_title,
         unit,
         showlegend=True,

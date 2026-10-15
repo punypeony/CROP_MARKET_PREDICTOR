@@ -1,4 +1,4 @@
-# Crop Market Price Predictor
+# Commodity Market Price Predictor
 
 A Streamlit dashboard for exploring historical Philippine agricultural commodity prices and generating Random Forest price estimates from World Food Programme (WFP) market data.
 
@@ -171,21 +171,25 @@ Streamlit normally opens `http://localhost:8501`. Stop the server with `Ctrl+C`.
 
 1. Select **Monthly Forecast** under **Graph Type**.
 2. Choose a commodity and compatible market.
-3. Enter the forecast year.
+3. Enter the forecast year and choose a focus month.
 4. Select **Generate Forecast**.
-5. Review the chart, summary cards, table, and downloadable CSV.
+5. Review the highlighted month, full-year chart, summary cards, table, and downloadable CSV.
 
 Forecast values are model-generated point estimates. When the selected year is later than the available WFP records, the application displays an extrapolation warning.
+After generating a forecast, the focus month can be changed without running the model again.
 
 ### Historical Model Fit
 
 1. Select **Historical Model Fit** under **Graph Type**.
 2. Choose a commodity and compatible market.
-3. Select the start year, end year, and aggregation.
+3. Select the start year, end year, and aggregation. For monthly aggregation, optionally select one calendar month to compare across years.
 4. Select **Generate Comparison**.
 5. Review the shared Actual WFP and Random Forest chart, fit-aware metrics, comparison table, and downloadable CSV.
 
 For monthly aggregation, compatible original WFP observations are grouped by calendar month using their arithmetic mean. One source observation remains that observation's monthly average; multiple compatible observations are averaged. Missing months are not filled with invented actual values.
+
+The optional month filter keeps one calendar month per selected year in the chart, metrics, table, and CSV. **All Months** preserves the complete monthly timeline, and yearly aggregation ignores the month filter.
+Specific-month comparisons and yearly aggregation require at least two selected years so the result contains more than one plotted period. A one-year range remains available with **All Months** and monthly aggregation.
 
 The model produces estimates for the complete selected calendar range, while metrics use only periods where both an actual value and a prediction exist.
 

@@ -65,10 +65,22 @@ def build_historical_comparison(
     start_year,
     end_year,
     aggregation,
+    month=None,
 ):
     """Build comparable actual and Random Forest historical price series."""
     if aggregation not in {"Monthly Average", "Yearly Average"}:
         raise ValueError(f"Unsupported aggregation: {aggregation}")
+    if month is not None and int(month) not in range(1, 13):
+        raise ValueError("Month must be between 1 and 12.")
+    if aggregation == "Yearly Average" and month is not None:
+        raise ValueError("A month filter requires monthly aggregation.")
+    if int(start_year) == int(end_year) and (
+        aggregation == "Yearly Average" or month is not None
+    ):
+        raise ValueError(
+            "Select at least two years when using a specific month or "
+            "yearly aggregation."
+        )
 
     actual, series_details = get_monthly_actual_prices(
         df, commodity, market, start_year, end_year
@@ -100,6 +112,10 @@ def build_historical_comparison(
     )
 
     if aggregation == "Monthly Average":
+        if month is not None:
+            monthly = monthly.loc[
+                monthly["period"].dt.month == int(month)
+            ].reset_index(drop=True)
         return monthly, series_details
 
     comparable = monthly.loc[monthly["actual_price"].notna()].copy()
