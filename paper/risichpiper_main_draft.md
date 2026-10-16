@@ -15,7 +15,7 @@ padayaojm@students.national-u.edu.ph
 
 ## Abstract
 
-Food commodity prices vary across locations, commodities, market levels, units, and time, making manual comparison difficult for producers, consumers, traders, and analysts. This study developed an end-to-end traditional machine-learning system that estimates Philippine food commodity prices from publicly available World Food Programme market records. The processed dataset contains 242,212 observations from January 2000 to August 2026, covering 17 first-level administrative areas, 79 second-level areas, 108 markets, and 73 commodities across six food categories. Price in Philippine pesos per recorded unit was the regression target. A chronological 80:20 split produced 193,769 training observations and 48,443 held-out observations. Categorical features were one-hot encoded inside a reusable preprocessing pipeline, while numeric location and calendar features were passed through. Exactly three permitted regression algorithms—Linear Regression, Random Forest Regressor, and Gradient Boosting Regressor—were compared using five-fold time-series cross-validation with mean absolute error (MAE) as the primary metric. Random Forest obtained the lowest validation MAE of PHP 23.216, compared with PHP 26.146 for Gradient Boosting and PHP 29.153 for Linear Regression. The saved Random Forest pipeline achieved MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.956 on the held-out partition. Commodity and category were the dominant aggregated feature groups. A Streamlit application loads the saved pipeline and provides a 12-month prediction view with a selectable focus month and historical actual-versus-predicted views with optional calendar-month filtering. The results demonstrate the practical value of nonlinear ensemble regression for heterogeneous market data, while also identifying limitations involving price-unit comparability, inflation, exogenous variables, uncertainty estimates, and evaluation documentation.
+Food commodity prices vary across locations, commodities, market levels, units, and time, making manual comparison difficult for producers, consumers, traders, and analysts. This study developed an end-to-end traditional machine-learning system that estimates Philippine food commodity prices from publicly available World Food Programme market records. The processed dataset contains 242,212 observations from January 2000 to August 2026, covering 17 first-level administrative areas, 79 second-level areas, 108 markets, and 73 commodities across six food categories. Price in Philippine pesos per recorded unit was the regression target. A chronological 80:20 split produced 193,769 training observations and 48,443 held-out observations. Categorical features were one-hot encoded inside a reusable preprocessing pipeline, while numeric location and calendar features were passed through. Exactly three permitted regression algorithms—Linear Regression, Random Forest Regressor, and Gradient Boosting Regressor—were compared using five-fold time-series cross-validation with mean absolute error (MAE) as the primary metric. Random Forest obtained the lowest validation MAE of PHP 23.225, compared with PHP 26.333 for Gradient Boosting and PHP 29.132 for Linear Regression. The saved Random Forest pipeline achieved MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.9565 on the held-out partition. Commodity and category were the dominant aggregated feature groups. A Streamlit application loads the saved pipeline and provides a 12-month prediction view with a selectable focus month and historical actual-versus-predicted views with optional calendar-month filtering. The results demonstrate the practical value of nonlinear ensemble regression for heterogeneous market data, while also identifying limitations involving price-unit comparability, inflation, exogenous variables, uncertainty estimates, and evaluation documentation.
 
 **Index Terms—** food commodity prices, machine learning, Philippines, random forest, regression
 
@@ -187,17 +187,23 @@ The EDA therefore led to five decisions: retain categorical market and product d
 
 ### B. Cross-Validation Comparison
 
-Table II presents the mean five-fold time-series cross-validation MAE reported by the validation notebook (`03_model_validation.ipynb`). Random Forest achieved the smallest error, improving on Linear Regression by PHP 5.937 (20.4%) and on Gradient Boosting by PHP 2.930 (11.2%). This result selected Random Forest for final pipeline serialization.
+Table II reports MAE, RMSE, and R² for the selected setting of each algorithm on the same five training folds in the validation notebook (`03_model_validation.ipynb`). These scores do not use the held-out partition. Random Forest had the lowest mean MAE, PHP 23.225 (SD 7.479), which is PHP 5.907 (20.3%) lower than Linear Regression (PHP 29.132) and PHP 3.108 (11.8%) lower than Gradient Boosting (PHP 26.333). This result selected Random Forest for final pipeline serialization.
 
-**Table II. Five-fold time-series validation results**
+**Table II. Five-fold time-series scores for the selected settings**
 
-| Algorithm | Mean validation MAE (PHP) | Rank |
-|---|---:|---:|
-| Random Forest Regressor | **23.216** | **1** |
-| Gradient Boosting Regressor | 26.146 | 2 |
-| Linear Regression | 29.153 | 3 |
+| Algorithm | Metric | Mean | SD | Fold 1 | Fold 2 | Fold 3 | Fold 4 | Fold 5 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Linear Regression | MAE | 29.132 | 1.593 | 26.591 | 28.807 | 30.141 | 31.362 | 28.757 |
+| Linear Regression | RMSE | 46.143 | 2.854 | 42.053 | 45.045 | 47.061 | 50.812 | 45.743 |
+| Linear Regression | R² | 0.846 | 0.017 | 0.822 | 0.839 | 0.854 | 0.842 | 0.873 |
+| Random Forest Regressor | MAE | **23.225** | 7.479 | 37.396 | 24.048 | 18.931 | 18.980 | 16.769 |
+| Random Forest Regressor | RMSE | 40.051 | 11.307 | 61.246 | 41.349 | 32.896 | 35.503 | 29.260 |
+| Random Forest Regressor | R² | 0.857 | 0.121 | 0.622 | 0.864 | 0.929 | 0.923 | 0.948 |
+| Gradient Boosting Regressor | MAE | 26.333 | 2.578 | 31.276 | 26.488 | 24.467 | 24.898 | 24.538 |
+| Gradient Boosting Regressor | RMSE | 41.800 | 3.971 | 48.868 | 42.363 | 38.096 | 41.725 | 37.946 |
+| Gradient Boosting Regressor | R² | 0.865 | 0.056 | 0.759 | 0.857 | 0.904 | 0.893 | 0.913 |
 
-The validation notebook scores the selected setting of each algorithm on these same five training folds and reports the mean, standard deviation, and per-fold MAE, RMSE, and R². That comparison does not use the held-out partition. Table II reports the mean MAE from the completed search.
+Fold 1 is the weakest fold for all three algorithms. Random Forest moves from MAE PHP 37.396 and R² 0.622 on that fold to MAE near PHP 17–19 and R² above 0.92 on folds 3–5. Gradient Boosting and Linear Regression stay inside a narrower band.
 
 ### C. Held-Out Performance and Model Selection
 
@@ -211,7 +217,7 @@ The model-development notebook (`02_modeling.ipynb`) also contains a three-model
 | Random Forest Regressor | **17.350** | **28.239** | **0.955** |
 | Gradient Boosting Regressor | 30.653 | 43.925 | 0.892 |
 
-A read-only reproduction using the current processed dataset and saved Random Forest pipeline yielded the results in Table IV. No fitting or artifact saving occurred during this check. The validation notebook printed MAE = PHP 17.272, RMSE = PHP 27.947, and R² = 0.956 for its in-session model; the saved file reproduces PHP 17.271 and PHP 27.946. The source of this third-decimal difference was not determined.
+A read-only check in the validation notebook reloaded the saved Random Forest pipeline and scored it on the 48,443 later observations. No fitting or artifact saving occurred. The notebook printed MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.9565, and it reported that the saved file was not modified.
 
 **Table IV. Reproduced saved-pipeline results on 48,443 later observations**
 
@@ -219,7 +225,7 @@ A read-only reproduction using the current processed dataset and saved Random Fo
 |---|---:|
 | MAE | PHP 17.271 |
 | RMSE | PHP 27.946 |
-| R² | 0.956 |
+| R² | 0.9565 |
 | Mean residual (actual − predicted) | PHP 7.746 |
 | Median residual | PHP 3.667 |
 | Residual standard deviation | PHP 26.852 |
@@ -308,7 +314,7 @@ The most important limitations are:
 
 1. **Test chronology and documentation.** The notebook reports held-out metrics for all three algorithms before the final saved-pipeline validation. This weakens the claim that the test partition was untouched until after selection. A final protocol should select and tune entirely inside training data, preserve a genuinely unseen date block, and record that sequence.
 2. **Same-date split boundary.** Multiple observations from 15 February 2025 appear on both sides of the row-level 80:20 cutoff. Splitting at a unique-date boundary would provide stronger temporal separation.
-3. **Validation summary.** Table II reports the mean cross-validation MAE. The standard deviation and the per-fold MAE, RMSE, and R² for the same training folds are produced by the validation notebook rather than repeated in that table.
+3. **Fold variability.** Random Forest's mean validation MAE of PHP 23.225 combines a weak first fold (MAE PHP 37.396, R² 0.622) with later folds near PHP 17–19 and R² above 0.92. Table II reports that spread; the mean alone does not.
 4. **Heterogeneous measurement units.** Although unit is modeled, pooled metrics combine price errors from KG, Unit, and 750 ML records. Unit-stratified metrics would be more interpretable.
 5. **No inflation adjustment.** Nominal pesos across 2000–2026 are compared. Year captures trend but does not replace a consumer-price deflator.
 6. **No lagged price or exogenous drivers.** The feature set excludes recent price lags, rainfall, extreme weather, production volume, fuel costs, trade flows, policy events, and inflation indices.
@@ -320,7 +326,7 @@ These limitations constrain generalization. They do not change the local results
 
 ## V. Conclusion and Recommendations
 
-This study developed and evaluated a traditional machine-learning system for Philippine food commodity-price prediction. EDA showed a large, right-skewed, heterogeneous dataset in which commodity, category, unit, market level, geography, and time all matter. Under a shared five-fold time-series validation design, Random Forest obtained the lowest mean MAE (PHP 23.216), ahead of Gradient Boosting (PHP 26.146) and Linear Regression (PHP 29.153). The saved Random Forest pipeline reproduced MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.956 on 48,443 later observations. Its preprocessing and estimator are integrated into a Streamlit application with a full-year prediction view, selectable month detail, and all-month or month-filtered historical comparison workflows.
+This study developed and evaluated a traditional machine-learning system for Philippine food commodity-price prediction. EDA showed a large, right-skewed, heterogeneous dataset in which commodity, category, unit, market level, geography, and time all matter. Under a shared five-fold time-series validation design, Random Forest obtained the lowest mean MAE (PHP 23.225), ahead of Gradient Boosting (PHP 26.333) and Linear Regression (PHP 29.132). The saved Random Forest pipeline reproduced MAE = PHP 17.271, RMSE = PHP 27.946, and R² = 0.9565 on 48,443 later observations. Its preprocessing and estimator are integrated into a Streamlit application with a full-year prediction view, selectable month detail, and all-month or month-filtered historical comparison workflows.
 
 Further work should:
 
